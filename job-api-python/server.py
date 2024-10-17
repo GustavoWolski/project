@@ -5,27 +5,31 @@ import string
 import unicodedata
 from langdetect import detect, DetectorFactory, LangDetectException
 from googletrans import Translator
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.util import ngrams
 import spacy
-from transformers import pipeline
-from collections import Counter  # Certifique-se de que esta linha está presente
+from collections import Counter
 
 # Configuração do Flask
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
 
-
-# Inicializar o tradutor e spaCy
+# Inicializar o tradutor, stopwords e spaCy
 translator = Translator()
+stop_words = set(stopwords.words('portuguese'))
 nlp = spacy.load('pt_core_news_sm')
 
-# Inicializar o pipeline de NER com um modelo de transformers ajustado para NER
-ner_pipeline = pipeline("ner", model="Davlan/bert-base-multilingual-cased-ner-hrl", aggregation_strategy="simple")
+# Palavras comuns adicionais que podem não ser úteis para identificar competências
+additional_common_words = {
+    'habilidade', 'conhecimento', 'experiência', 'necessário', 'capacidade', 'trabalho', 'responsabilidade'
+}
 
 # Definir semente para resultados consistentes na detecção de idioma
 DetectorFactory.seed = 0
 
-# Função para limpar e preparar o texto
-def clean_text(text):
+# Função para limpar, lematizar e filtrar palavras irrelevantes do texto
+def clean_and_lemmatize_text(text):
     if not text or not isinstance(text, str):  # Verifica se o texto é None ou não é string
         return None
 
@@ -44,7 +48,7 @@ def clean_text(text):
                                "]+", flags=re.UNICODE)
 
     # Converte o texto para minúsculas e remove emojis
-    text = emoji_pattern.sub(' ', text.lower())
+    text = emoji_pattern.sub('', text.lower())
 
     # Remove acentos
     text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
@@ -55,10 +59,14 @@ def clean_text(text):
     # Remove palavras com números, caracteres especiais e quebras de linha
     text = re.sub(r'\w*\d\w*|[\n·‘’“”…]', ' ', text)
 
-    # Substitui espaços múltiplos por um único espaço
-    cleaned_text = re.sub(r'\s+', ' ', text).strip()
+    # Tokeniza o texto em palavras e remove stopwords
+    words = [word for word in word_tokenize(text) if word not in stop_words]
 
-    return cleaned_text
+    # Realiza a lemmatização com spaCy
+    doc = nlp(' '.join(words))
+    lemmatized_words = [token.lemma_ for token in doc if token.lemma_ not in stop_words]
+
+    return lemmatized_words
 
 # Função para detectar e traduzir o texto para o português
 def translate_to_portuguese(text):
@@ -80,13 +88,26 @@ def translate_to_portuguese(text):
         print(f"Erro ao detectar/traduzir o idioma: {e}")
         return None  # Exclui texto se houver erro na detecção ou tradução
 
-# Função para extrair competências usando o modelo de NER baseado em transformers
-def extract_competencies_with_transformer(text):
-    if not text:
-        return []
-    results = ner_pipeline(text)
-    competencies = [result['word'] for result in results if result['entity_group'] in {'SKILL', 'TOOL', 'COMPETENCY'}]
-    return competencies
+# Função para calcular a frequência de palavras, bigramas e trigramas
+def calculate_ngram_frequencies(words):
+    # Conta a frequência das palavras
+    word_counts = Counter(words)
+
+    # Filtra palavras comuns irrelevantes
+    filtered_word_counts = {
+        word: count for word, count in word_counts.items()
+        if word not in additional_common_words and len(word) > 1
+    }
+
+    # Calcula bigramas e trigramas
+    bigrams = list(ngrams(words, 2))
+    trigrams = list(ngrams(words, 3))
+
+    # Conta a frequência de bigramas e trigramas
+    bigram_counts = Counter(bigrams)
+    trigram_counts = Counter(trigrams)
+
+    return filtered_word_counts, bigram_counts, trigram_counts
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -96,22 +117,26 @@ def analyze():
         if not descriptions:
             return jsonify({'error': 'No descriptions provided'}), 400
 
-        # Extrair competências de cada descrição
-        all_competencies = []
+        # Traduzir, limpar, lematizar e agregar todas as palavras das descrições recebidas
+        all_words = []
         for description in descriptions:
-            translated_text = translate_to_portuguese(description)
-            if translated_text:
-                cleaned_text = clean_text(translated_text)
-                competencies = extract_competencies_with_transformer(cleaned_text)
-                all_competencies.extend(competencies)
+            lemmatized_words = clean_and_lemmatize_text(translate_to_portuguese(description))
+            if lemmatized_words:
+                all_words.extend(lemmatized_words)
 
-        # Contabiliza as competências extraídas
-        competency_counts = Counter(all_competencies)
+        # Calcula a frequência de palavras, bigramas e trigramas
+        word_frequencies, bigram_frequencies, trigram_frequencies = calculate_ngram_frequencies(all_words)
 
-        # Retorna as competências extraídas
+        # Formata bigramas e trigramas como strings para a resposta JSON
+        bigram_frequencies = { ' '.join(bigram): count for bigram, count in bigram_frequencies.items() }
+        trigram_frequencies = { ' '.join(trigram): count for trigram, count in trigram_frequencies.items() }
+
+        # Retorna as frequências das palavras, bigramas e trigramas
         return jsonify({
-            'message': 'Competências extraídas com sucesso!',
-            'competencies': competency_counts
+            'message': 'Frequência de palavras, bigramas e trigramas calculada com sucesso!',
+            'word_frequencies': word_frequencies,
+            'bigram_frequencies': bigram_frequencies,
+            'trigram_frequencies': trigram_frequencies
         })
     except Exception as e:
         # Log do erro para ajudar na depuração
