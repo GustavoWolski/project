@@ -29,7 +29,7 @@ Windows:
 2. Em seguida realize a instalação dos seguinte pacotes: <pip install spacy, flask, nltk, langdetect, googletrans, flask-cors>
 3. Realize o download dos recursos do NLTK (Natural Language Toolkit):<python -m nltk.downloader punkt wordnet stopwords>
 4. Realize a instalação do lemmatizador em portugues pip install </caminho/para/pt_core_news_sm-3.7.0-py3-none-any.whl>
-
+5. inicie o servidor com python server.py
 ```
 <comando_de_instalação>
 ```
