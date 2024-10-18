@@ -1,3 +1,2 @@
-job-api-python/venv/*
-job-api-python/*
-!/job-api-python/server.py
+job-api-python/.env
+.venv

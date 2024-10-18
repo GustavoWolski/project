@@ -1,0 +1,98 @@
+# Skill Findings for Jobs 
+> Linha adicional de texto informativo sobre o que o projeto faz. Sua introdução deve ter cerca de 2 ou 3 linhas. Não exagere, as pessoas não vão ler.
+
+### Ajustes e melhorias
+
+O projeto ainda está em desenvolvimento e as próximas atualizações serão voltadas para as seguintes tarefas:
+
+- [x] UI
+- [x] Captura de descrições de jobs
+- [ ] Tratamento e retorno do sumario de competências
+- [ ] Exibição para o usuário
+- [ ] Ajustes e melhorias
+
+## 💻 Pré-requisitos
+
+Antes de começar, verifique se você atendeu aos seguintes requisitos:
+
+- Tenha a versão mais recente do python instalada
+- Crie um ambiente virtual na pasta raiz do projeto através do VsCode 
+- Você leu esta sessão de README
+
+## 🚀 Instalando <JOB_Skills_Search>
+
+Para instalar o <JOB_Skills_Search>, siga estas etapas:
+
+Windows:
+
+1. Crie uma pasta com <mkdir job-api-python> e após isso navegue até a pasta <cd job-api-python>, caso ainda não tenha feito, crie o ambiente virtual com <python -m venv venv> e por fim ative o ambiente virtual com: <venv\Scripts\activate>
+2. Em seguida realize a instalação dos seguinte pacotes: <pip install spacy, flask, nltk, langdetect, googletrans, flask-cors>
+3. Realize o download dos recursos do NLTK (Natural Language Toolkit):<python -m nltk.downloader punkt wordnet stopwords>
+4. Realize a instalação do lemmatizador em portugues pip install </caminho/para/pt_core_news_sm-3.7.0-py3-none-any.whl>
+
+```
+<comando_de_instalação>
+```
+
+## ☕ Usando <nome_do_projeto>
+
+Para usar <nome_do_projeto>, siga estas etapas:
+
+```
+<exemplo_de_uso>
+```
+
+Adicione comandos de execução e exemplos que você acha que os usuários acharão úteis. Forneça uma referência de opções para pontos de bônus!
+
+## 📫 Contribuindo para <nome_do_projeto>
+
+Para contribuir com <nome_do_projeto>, siga estas etapas:
+
+1. Bifurque este repositório.
+2. Crie um branch: `git checkout -b <nome_branch>`.
+3. Faça suas alterações e confirme-as: `git commit -m '<mensagem_commit>'`
+4. Envie para o branch original: `git push origin <nome_do_projeto> / <local>`
+5. Crie a solicitação de pull.
+
+Como alternativa, consulte a documentação do GitHub em [como criar uma solicitação pull](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request).
+
+## 🤝 Colaboradores
+
+Agradecemos às seguintes pessoas que contribuíram para este projeto:
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="#" title="defina o título do link">
+        <img src="https://avatars3.githubusercontent.com/u/31936044" width="100px;" alt="Foto do Iuri Silva no GitHub"/><br>
+        <sub>
+          <b>Iuri Silva</b>
+        </sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="#" title="defina o título do link">
+        <img src="https://s2.glbimg.com/FUcw2usZfSTL6yCCGj3L3v3SpJ8=/smart/e.glbimg.com/og/ed/f/original/2019/04/25/zuckerberg_podcast.jpg" width="100px;" alt="Foto do Mark Zuckerberg"/><br>
+        <sub>
+          <b>Mark Zuckerberg</b>
+        </sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="#" title="defina o título do link">
+        <img src="https://miro.medium.com/max/360/0*1SkS3mSorArvY9kS.jpg" width="100px;" alt="Foto do Steve Jobs"/><br>
+        <sub>
+          <b>Steve Jobs</b>
+        </sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+## 😄 Seja um dos contribuidores
+
+Quer fazer parte desse projeto? Clique [AQUI](CONTRIBUTING.md) e leia como contribuir.
+
+## 📝 Licença
+
+Esse projeto está sob licença. Veja o arquivo [LICENÇA](LICENSE.md) para mais detalhes.
