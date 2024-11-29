@@ -22,11 +22,19 @@ nlp = spacy.load('pt_core_news_sm')
 
 # Palavras comuns adicionais que podem não ser úteis para identificar competências
 additional_common_words = {
-    'habilidade', 'conhecimento', 'experiência', 'necessário', 'capacidade', 'trabalho', 'responsabilidade'
+    'empresa', 'americar', 'assistencia' ,'medico','latino','engenharia','auxilio','estao','restaurante','sempre','ref','agora', 'continuar', 'areo','sucesso' , 'humir','outro ','on' ,'line', 'officer','office', 'trabalhar', 'requirements', 'process' ,'stages' ,'step','and' ,'qualificatiom' ,'requisito' ,'qualificacoes','diverso' ,'sub', 'representar', 'estreito' ,'colaboracao','empregador','diversidade' ,'equidade' ,'inclusao', 'raco', 'cor', 'religiao', 'oportunidade', 'igual' 'trabalhar','orientacao', 'sexual' , 'sexo', 'bom','promocoes','dia', "saude",'valer', 'sao', 'Paulo', 'day', 'fazer' ,'parte', 'Brasil', 'off', 'aniversario','crenca' ,'religioso','alimentacao','licenca', 'seguro', 'vida','maternidade' ,'paternidade','beneficio', 'ir', 'cair' ,'rotina',"odontologico",'experiencia', 'voce', 'conhecimento', "pessoa", 'todo', 'necessário', 'capacidade', 'trabalho', 'responsabilidade'
 }
 
 # Definir semente para resultados consistentes na detecção de idioma
 DetectorFactory.seed = 0
+
+# Dicionário para corrigir lematização de palavras específicas
+lemmatization_corrections = {
+    'dados': 'dado',  # Mantém 'dados' como substantivo
+    'dado': 'dado' ,    # Mantém 'dado' como substantivo
+    'gerenciamento' : 'gestao' ,
+    'gerenciar' : 'gestao'
+}
 
 # Função para limpar, lematizar e filtrar palavras irrelevantes do texto
 def clean_and_lemmatize_text(text):
@@ -62,32 +70,52 @@ def clean_and_lemmatize_text(text):
     # Tokeniza o texto em palavras e remove stopwords
     words = [word for word in word_tokenize(text) if word not in stop_words]
 
-    # Realiza a lemmatização com spaCy
+    # Realiza a lematização com spaCy
     doc = nlp(' '.join(words))
-    lemmatized_words = [token.lemma_ for token in doc if token.lemma_ not in stop_words]
+    lemmatized_words = []
+    for token in doc:
+        # Aplica correção específica para palavras conhecidas
+        if token.text in lemmatization_corrections:
+            lemmatized_words.append(lemmatization_corrections[token.text])
+        else:
+            lemmatized_words.append(token.lemma_)
 
-    return lemmatized_words
+    # Remove palavras comuns adicionais antes de retornar
+    filtered_words = [
+        word for word in lemmatized_words
+        if word not in additional_common_words and len(word) > 1
+    ]
 
-# Função para detectar e traduzir o texto para o português
+    return filtered_words
+
 def translate_to_portuguese(text):
-    if not text or not isinstance(text, str) or not text.strip():  # Verifica se o texto é None, não é string ou está vazio
+    if not text or not isinstance(text, str) or not text.strip():  # Verifica entradas inválidas
+        print("Texto inválido fornecido para tradução.")
         return None
     try:
-        detected_language = detect(text)
-        if detected_language != 'pt':
+        detected_language = detect(text)  # Detecta o idioma
+        if detected_language != 'pt':  # Apenas traduz se não for português
             translation = translator.translate(text, dest='pt')
-            translated_text = translation.text
-            # Verifica se a tradução foi para o português
-            if detect(translated_text) == 'pt':
-                return translated_text
+            
+            # Verifica se a tradução retornou um objeto válido
+            if translation and hasattr(translation, 'text'):
+                translated_text = translation.text
+                if detect(translated_text) == 'pt':  # Valida a tradução
+                    return translated_text
+                else:
+                    print(f"Texto não traduzido corretamente: {translated_text}")
+                    return None
             else:
-                print(f"Texto não traduzido corretamente: {translated_text}")
-                return None  # Exclui texto se não estiver em português
-        return text
-    except (LangDetectException, Exception) as e:
-        print(f"Erro ao detectar/traduzir o idioma: {e}")
-        return None  # Exclui texto se houver erro na detecção ou tradução
-
+                print("Erro: Tradução retornou None ou resposta inesperada.")
+                return None
+        return text  # Retorna o texto original se já estiver em português
+    except LangDetectException as e:
+        print(f"Erro na detecção do idioma: {e}")
+        return None
+    except Exception as e:
+        print(f"Erro geral na tradução: {e}")
+        return None
+    
 # Função para calcular a frequência de palavras, bigramas e trigramas
 def calculate_ngram_frequencies(words):
     # Conta a frequência das palavras
@@ -120,9 +148,16 @@ def analyze():
         # Traduzir, limpar, lematizar e agregar todas as palavras das descrições recebidas
         all_words = []
         for description in descriptions:
-            lemmatized_words = clean_and_lemmatize_text(translate_to_portuguese(description))
-            if lemmatized_words:
-                all_words.extend(lemmatized_words)
+            # Traduz para português se necessário
+            translated_description = translate_to_portuguese(description)
+            if translated_description:
+                lemmatized_words = clean_and_lemmatize_text(translated_description)
+                if lemmatized_words:
+                    all_words.extend(lemmatized_words)
+
+        # Verifica se há palavras para análise
+        if not all_words:
+            return jsonify({'message': 'Nenhuma descrição válida foi processada'}), 400
 
         # Calcula a frequência de palavras, bigramas e trigramas
         word_frequencies, bigram_frequencies, trigram_frequencies = calculate_ngram_frequencies(all_words)
@@ -145,3 +180,4 @@ def analyze():
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)
+
